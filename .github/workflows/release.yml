@@ -7,12 +7,48 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to build (must already exist as a GitHub release)'
+        description: 'Existing git tag to release and build (e.g. 1.5.6)'
         required: true
         type: string
 
 jobs:
+  # Publishes the GitHub release and its per-platform archives. The docker job
+  # below downloads soba_linux_<arch>.tar.gz from this release, so it must
+  # finish first.
+  goreleaser:
+    runs-on: ubuntu-latest
+    name: GoReleaser
+    permissions:
+      contents: write   # create the release and upload assets using github.token
+    steps:
+    # Full history so goreleaser can build the changelog from the previous tag.
+    # On a manual run the tag is checked out explicitly; goreleaser requires
+    # HEAD to be exactly on the tag it releases.
+    -
+      name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ inputs.tag || github.ref }}
+        fetch-depth: 0
+
+    -
+      name: Setup Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version-file: go.mod
+
+    -
+      name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+      with:
+        distribution: goreleaser
+        version: '~> v2'
+        args: release --clean
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-and-push-docker-image:
+    needs: goreleaser
     runs-on: ubuntu-latest
     name: Docker Build, Tag, Push
     permissions:
@@ -51,10 +87,11 @@ jobs:
       name: Set up Docker Buildx
       uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
 
-    # This workflow only triggers on tag pushes, so github.ref_name is the tag
-    # name. It replaces git describe --tags, which depended on the tag object
-    # being present in a fetch-depth 1 checkout and would emit a
-    # <tag>-<n>-g<sha> string if HEAD were ever not exactly on a tag.
+    # On a tag push github.ref_name is the tag name; on a manual run it is the
+    # branch, so the tag comes from the input instead. It replaces git describe
+    # --tags, which depended on the tag object being present in a fetch-depth 1
+    # checkout and would emit a <tag>-<n>-g<sha> string if HEAD were ever not
+    # exactly on a tag.
     # Passed via env rather than interpolated into the run script: git permits
     # backticks, $, ; and | in tag names, which would otherwise execute in a job
     # holding the registry credentials.

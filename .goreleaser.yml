@@ -24,48 +24,6 @@ builds:
       - -trimpath
     ldflags:
       - "-s -w -X main.version={{ .Version }} -X main.sha={{ .ShortCommit }} -X main.buildDate={{ .Date }} -X main.tag={{ .Tag }}"
-    hooks:
-      post:
-        - |
-          sh -c '
-          cat > /tmp/soba_gon_arm64.hcl << EOF
-          source = ["./dist/macos-soba_darwin_arm64_v8.0/soba"]
-          bundle_id = "uk.co.lessknown.soba"
-          apple_id {
-            username = "jon@lessknown.co.uk"
-            password = "@env:AC_PASSWORD"
-          }
-          sign {
-            application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
-          }
-          zip {
-            output_path = "./dist/soba_darwin_arm64_signed.zip"
-          }
-          EOF
-          gon /tmp/soba_gon_arm64.hcl
-          echo $?
-          '
-          echo $?
-        - |
-          sh -c '
-          cat > /tmp/soba_gon_amd64.hcl << EOF
-          source = ["./dist/macos-soba_darwin_amd64_v1/soba"]
-          bundle_id = "uk.co.lessknown.soba"
-          apple_id {
-            username = "jon@lessknown.co.uk"
-            password = "@env:AC_PASSWORD"
-          }
-          sign {
-            application_identity = "Developer ID Application: Jonathan Hadfield (VBZY8FBYR5)"
-          }
-          zip {
-            output_path = "./dist/soba_darwin_amd64_signed.zip"
-          }
-          EOF
-          echo $?
-          gon /tmp/soba_gon_amd64.hcl
-          echo $?
-          '
 
   - id: soba
     binary: soba
@@ -93,12 +51,13 @@ archives:
 
 release:
   github:
-    owner: jonhadfield
+    owner: edwardzhu
     name: soba
   prerelease: auto
   name_template: '{{ .Tag }}'
-  extra_files:
-    - glob: ./dist/soba_darwin*_signed.zip
+  # Lets a manual re-run of the Release workflow overwrite the assets of a
+  # release that already exists instead of failing on the upload.
+  replace_existing_artifacts: true
 
 announce:
   skip: true
