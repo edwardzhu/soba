@@ -54,6 +54,12 @@ jobs:
     permissions:
       contents: read
       packages: write   # push to ghcr.io using github.token
+    # The Docker Hub namespace can differ from the GitHub owner, so it comes
+    # from the DOCKERHUB_NAMESPACE repository variable when set. It is a
+    # variable rather than a secret because secret values are masked as ***
+    # wherever they appear in the log, including in image names.
+    env:
+      DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_NAMESPACE || github.repository_owner }}/${{ github.event.repository.name }}
     steps:
     -
       name: Checkout
@@ -183,7 +189,7 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: |
-          ${{ github.repository }}:latest
-          ${{ github.repository }}:${{ env.TAG }}
+          ${{ env.DOCKERHUB_IMAGE }}:latest
+          ${{ env.DOCKERHUB_IMAGE }}:${{ env.TAG }}
           ghcr.io/${{ github.repository }}:latest
           ghcr.io/${{ github.repository }}:${{ env.TAG }}
