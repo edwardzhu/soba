@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - '*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build (must already exist as a GitHub release)'
+        required: true
+        type: string
 
 jobs:
   build-and-push-docker-image:
@@ -22,8 +28,8 @@ jobs:
       uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
       with:
         registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ github.token }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     -
       name: Login to DockerHub
@@ -55,7 +61,7 @@ jobs:
     -
       name: Set release tag
       env:
-        TAG_NAME: ${{ github.ref_name }}
+        TAG_NAME: ${{ inputs.tag || github.ref_name }}
       run: echo "TAG=$TAG_NAME" >> "$GITHUB_ENV"
 
     # Each architecture is built and loaded separately, because a
