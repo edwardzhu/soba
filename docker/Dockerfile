@@ -19,7 +19,7 @@ ARG TAG
 ARG TARGETARCH
 
 WORKDIR /tmp
-RUN curl -fL --proto "=https" --tlsv1.2 -o soba.tar.gz "https://github.com/jonhadfield/soba/releases/download/${TAG}/soba_linux_${TARGETARCH}.tar.gz" \
+RUN curl -fL --proto "=https" --tlsv1.2 -o soba.tar.gz "https://github.com/edwardzhu/soba/releases/download/${TAG}/soba_linux_${TARGETARCH}.tar.gz" \
     && tar -xvzf soba.tar.gz \
     && rm ./*.gz \
     && mv ./soba /soba \
