@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	i "github.com/jonhadfield/soba/internal"
+	i "github.com/edwardzhu/soba/internal"
 	"github.com/stretchr/testify/require"
 )
 
