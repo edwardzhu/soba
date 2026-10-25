@@ -59,7 +59,7 @@ jobs:
     # variable rather than a secret because secret values are masked as ***
     # wherever they appear in the log, including in image names.
     env:
-      DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_NAMESPACE || github.repository_owner }}/${{ github.event.repository.name }}
+      DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}/${{ github.event.repository.name }}
     steps:
     -
       name: Checkout
