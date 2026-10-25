@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/edwardzhu/githosts-utils/v2"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/jonhadfield/githosts-utils/v2"
 	"gitlab.com/tozd/go/errors"
 )
 

@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/jonhadfield/soba/internal"
+	"github.com/edwardzhu/soba/internal"
 )
 
 var (

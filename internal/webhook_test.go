@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/edwardzhu/githosts-utils/v2"
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/jonhadfield/githosts-utils/v2"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 )
