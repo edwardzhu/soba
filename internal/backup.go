@@ -27,22 +27,16 @@ type BackupResults struct {
 	Results    *[]ProviderBackupResults `json:"results,omitempty"`
 }
 
+// execProviderBackups runs every configured provider backup. Individual
+// failures are reported as warnings once all backups have finished rather
+// than terminating the process, so a single bad repository does not cause
+// the container to exit and restart.
 func execProviderBackups() {
-	failed := runProviderBackups()
-
-	// If running one-shot (no scheduler) and any provider failed, surface a
-	// non-zero exit. With a scheduler the next-run banner is enough.
-	if job == nil && failed > 0 {
-		os.Exit(1)
-	}
-}
-
-func runProviderBackups() int {
 	backupDir, exists := GetEnvOrFile(envGitBackupDir)
 	if !exists || backupDir == "" {
 		logger.Printf("environment variable %s is not set; skipping backup run", envGitBackupDir)
 
-		return 0
+		return
 	}
 
 	if httpClient == nil {
@@ -82,14 +76,27 @@ func runProviderBackups() int {
 		logger.Println("backups complete")
 	}
 
+	logBackupFailures(backupResults, succeeded, failed)
+
 	notify(backupResults, succeeded, failed)
 
 	if job != nil {
 		nextRun, _ := job.NextRun()
 		logger.Printf("next Run scheduled for: %s", nextRun.Format("2006-01-02 15:04:05 -0700 MST"))
 	}
+}
 
-	return failed
+// logBackupFailures prints a warning summary of every failed backup.
+func logBackupFailures(br BackupResults, succeeded, failed int) {
+	if failed == 0 {
+		return
+	}
+
+	logger.Printf("WARNING: %d backup(s) failed, %d succeeded:", failed, succeeded)
+
+	for _, f := range getBackupFailures(br) {
+		logger.Printf("WARNING:   %s", f)
+	}
 }
 
 // collectProviderBackupResults runs a backup for each provider with complete

@@ -103,3 +103,33 @@ func TestGetBackupsStatsAdditional(t *testing.T) {
 	require.Zero(t, ok)
 	require.Equal(t, 1, failed)
 }
+
+func TestGetBackupFailures(t *testing.T) {
+	require.Empty(t, getBackupFailures(BackupResults{}))
+
+	br := BackupResults{Results: &[]ProviderBackupResults{
+		{
+			Provider: "GitHub",
+			Results: githosts.ProviderBackupResult{
+				BackupResults: []githosts.RepoBackupResults{
+					{Repo: "ok-repo"},
+					{Repo: "bad-repo", Error: tozdErrors.New("clone failed")},
+				},
+			},
+		},
+		{
+			Provider: "GitLab",
+			Results:  githosts.ProviderBackupResult{Error: tozdErrors.New("auth failed")},
+		},
+		{
+			Provider: "Gitea",
+			Results:  githosts.ProviderBackupResult{},
+		},
+	}}
+
+	require.Equal(t, []string{
+		"GitHub: bad-repo: clone failed",
+		"GitLab: auth failed",
+		"Gitea: no repositories backed up",
+	}, getBackupFailures(br))
+}

@@ -200,3 +200,35 @@ func getBackupsStats(br BackupResults) (ok, failed int) {
 
 	return ok, failed
 }
+
+// getBackupFailures describes each failure counted by getBackupsStats so they
+// can be reported together once all backups have finished.
+func getBackupFailures(br BackupResults) []string {
+	if br.Results == nil {
+		return nil
+	}
+
+	var failures []string
+
+	for _, pr := range *br.Results {
+		if pr.Results.Error != nil {
+			failures = append(failures, fmt.Sprintf("%s: %v", pr.Provider, pr.Results.Error))
+
+			continue
+		}
+
+		if len(pr.Results.BackupResults) == 0 {
+			failures = append(failures, fmt.Sprintf("%s: no repositories backed up", pr.Provider))
+
+			continue
+		}
+
+		for _, r := range pr.Results.BackupResults {
+			if r.Error != nil {
+				failures = append(failures, fmt.Sprintf("%s: %s: %v", pr.Provider, r.Repo, r.Error))
+			}
+		}
+	}
+
+	return failures
+}
